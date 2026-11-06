@@ -263,19 +263,33 @@ def salvar_chave(chave: str = Form(...)):
     return {"ok": True, "msg": "Chave salva. O bot do chat on-line já usa o Dify."}
 
 
+def corpo(r: httpx.Response):
+    """Resposta do serviço simulado; se não vier JSON (ex.: erro 500 em texto), mostra o texto."""
+    try:
+        return r.json()
+    except ValueError:
+        return r.text
+
+
 @app.post("/api/teste/ouvidoria")
 async def teste_ouvidoria(tipo: str = Form(...), texto: str = Form(...)):
-    async with httpx.AsyncClient(timeout=10) as h:
-        r = await h.post(URL["ouvidoria"] + "/manifestacoes", json={"tipo": tipo, "texto": texto, "canal": "chat"})
-    return {"status": r.status_code, "resposta": r.json()}
+    try:
+        async with httpx.AsyncClient(timeout=10) as h:
+            r = await h.post(URL["ouvidoria"] + "/manifestacoes", json={"tipo": tipo, "texto": texto, "canal": "chat"})
+    except httpx.HTTPError:
+        return {"status": None, "resposta": "A ouvidoria simulada não respondeu. Confira o item 1 do painel."}
+    return {"status": r.status_code, "resposta": corpo(r)}
 
 
 @app.post("/api/teste/tribunal")
 async def teste_tribunal(numero: str = Form(...), token: str = Form(""), vezes: int = Form(1)):
     cab = {"Authorization": f"Bearer {token}"} if token else {}
     resultados = []
-    async with httpx.AsyncClient(timeout=10) as h:
-        for _ in range(max(1, min(vezes, 15))):
-            r = await h.get(f"{URL['tribunal']}/processos/{numero}", headers=cab)
-            resultados.append({"status": r.status_code, "resposta": r.json()})
+    try:
+        async with httpx.AsyncClient(timeout=10) as h:
+            for _ in range(max(1, min(vezes, 15))):
+                r = await h.get(f"{URL['tribunal']}/processos/{numero}", headers=cab)
+                resultados.append({"status": r.status_code, "resposta": corpo(r)})
+    except httpx.HTTPError:
+        resultados.append({"status": None, "resposta": "A API do tribunal simulada não respondeu. Confira o item 1 do painel."})
     return resultados

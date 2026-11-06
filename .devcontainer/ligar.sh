@@ -2,7 +2,8 @@
 # Liga o laboratório sempre que o Codespace abre. Na primeira vez também configura tudo.
 cd "$(dirname "$0")/.." || exit 1
 mkdir -p config
-exec > >(tee -a config/inicio.log) 2>&1
+# Ao recomeçar depois da atualização, a saída já passa pelo tee: um segundo tee duplicaria o log
+[ -n "$KIT_ATUALIZADO" ] || exec > >(tee -a config/inicio.log) 2>&1
 echo "== Ligando o laboratório do Chatbot STJ =="
 
 # Traz a versão nova do kit; se este script mudou, recomeça usando o novo
