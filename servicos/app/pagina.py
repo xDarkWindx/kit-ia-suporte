@@ -41,8 +41,7 @@ def ler(nome: str) -> dict:
 def inicio():
     html = (STATIC / "index.html").read_text(encoding="utf-8")
     cw = ler("chatwoot.json")
-    return html.replace("{{WEBSITE_TOKEN}}", cw.get("website_token", "")) \
-               .replace("{{LOGIN}}", cw.get("login", "equipe@suporte-lab.com.br")) \
+    return html.replace("{{LOGIN}}", cw.get("login", "equipe@suporte-lab.com.br")) \
                .replace("{{SENHA}}", cw.get("senha", "Suporte@2026")) \
                .replace("{{PUB_DIFY}}", os.environ.get("PUB_DIFY", "http://localhost:8081")) \
                .replace("{{PUB_CHATWOOT}}", os.environ.get("PUB_CHATWOOT", "http://localhost:3000"))
@@ -66,6 +65,8 @@ async def status():
         "chatwoot_configurado": bool(ler("chatwoot.json").get("website_token")),
         "dify_configurado": bool(ler("dify.json").get("dify_key")),
         "kit_atualizado": ler("atualizacao.json").get("situacao", "ok") == "ok",
+        # o painel liga o balão do chat assim que o Chatwoot fica pronto, sem precisar recarregar
+        "website_token": ler("chatwoot.json").get("website_token", ""),
     }
 
 
